@@ -1,0 +1,21 @@
+product_id,quantity,product_name,category
+1,222,Milk,Dairy
+2,185,Bread,Bakery
+3,160,Eggs,Dairy
+12,139,Tea,Beverages
+16,132,Soap,Personal Care
+9,129,Rice,Grocery
+4,120,Butter,Dairy
+18,105,Detergent,Household
+6,98,Biscuits,Snacks
+10,90,Wheat Flour,Grocery
+7,87,Chips,Snacks
+15,81,Shampoo,Personal Care
+11,72,Sugar,Grocery
+5,68,Cheese,Dairy
+13,67,Coffee,Beverages
+19,59,Dishwash,Household
+20,58,Toilet Cleaner,Household
+8,53,Cookies,Snacks
+17,51,Toothpaste,Personal Care
+14,50,Juice,Beverages

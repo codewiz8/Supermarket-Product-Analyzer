@@ -1,0 +1,21 @@
+product_id,product_name,category,unit_price
+1,Milk,Dairy,55
+2,Bread,Bakery,40
+3,Eggs,Dairy,70
+4,Butter,Dairy,60
+5,Cheese,Dairy,120
+6,Biscuits,Snacks,30
+7,Chips,Snacks,35
+8,Cookies,Snacks,45
+9,Rice,Grocery,80
+10,Wheat Flour,Grocery,55
+11,Sugar,Grocery,45
+12,Tea,Beverages,90
+13,Coffee,Beverages,140
+14,Juice,Beverages,75
+15,Shampoo,Personal Care,160
+16,Soap,Personal Care,35
+17,Toothpaste,Personal Care,85
+18,Detergent,Household,110
+19,Dishwash,Household,95
+20,Toilet Cleaner,Household,125

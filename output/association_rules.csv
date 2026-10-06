@@ -1,0 +1,9 @@
+antecedent,consequent,support,confidence,lift
+Shampoo,Soap,0.0825,0.9429,6.2857
+Soap,Shampoo,0.0825,0.55,6.2857
+Wheat Flour,Rice,0.08,0.7442,5.0453
+Rice,Wheat Flour,0.08,0.5424,5.0453
+Eggs,Bread,0.1125,0.5696,2.4239
+Bread,Eggs,0.1125,0.4787,2.4239
+Bread,Milk,0.11,0.4681,1.6868
+Milk,Bread,0.11,0.3964,1.6868
