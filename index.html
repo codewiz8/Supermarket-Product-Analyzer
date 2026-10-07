@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Supermarket Product Analyzer</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            color: #222;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #222;
+            font-size: 42px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+
+        /* =========================
+           ERROR MESSAGE
+           ========================= */
+
+        #error {
+            display: none;
+            background: #ffe5e5;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* =========================
+           CARDS
+           ========================= */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card h3 {
+            color: #777;
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #222;
+            word-break: break-word;
+        }
+
+        /* =========================
+           CHARTS
+           ========================= */
+
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-box h2 {
+            font-size: 19px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        canvas {
+            width: 100% !important;
+            max-height: 420px;
+        }
+
+        /* =========================
+           RESPONSIVE
+           ========================= */
+
+        @media (max-width: 900px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: auto;
+            }
+
+            h1 {
+                font-size: 34px;
+            }
+
+        }
+
+        @media (max-width: 500px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 30px;
+            }
+
+            .subtitle {
+                font-size: 15px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- =========================
+         TITLE
+         ========================= -->
+
+    <h1>
+        Supermarket Product Analyzer
+    </h1>
+
+    <p class="subtitle">
+        Sales analysis and product performance dashboard
+    </p>
+
+
+    <!-- =========================
+         ERROR MESSAGE
+         ========================= -->
+
+    <div id="error">
+        ⚠️ Could not load analysis files.
+    </div>
+
+
+    <!-- =========================
+         SUMMARY CARDS
+         ========================= -->
+
+    <div class="cards">
+
+        <div class="card">
+
+            <h3>
+                Total Revenue
+            </h3>
+
+            <p id="revenue">
+                Loading...
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Top Category
+            </h3>
+
+            <p id="category">
+                Loading...
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Top Product
+            </h3>
+
+            <p id="product">
+                Loading...
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Categories
+            </h3>
+
+            <p id="categories">
+                Loading...
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         CHARTS
+         ========================= -->
+
+    <div class="charts">
+
+
+        <!-- CATEGORY CHART -->
+
+        <div class="chart-box">
+
+            <h2>
+                Revenue by Category
+            </h2>
+
+            <canvas id="categoryChart"></canvas>
+
+        </div>
+
+
+        <!-- PRODUCT CHART -->
+
+        <div class="chart-box">
+
+            <h2>
+                Top Products by Quantity Sold
+            </h2>
+
+            <canvas id="productChart"></canvas>
+
+        </div>
+
+
+        <!-- MONTHLY CHART -->
+
+        <div class="chart-box full-width">
+
+            <h2>
+                Monthly Revenue
+            </h2>
+
+            <canvas id="monthlyChart"></canvas>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+    /* =====================================================
+       CSV LOADER
+       ===================================================== */
+
+    async function loadCSV(file) {
+
+        console.log("Loading:", file);
+
+
+        const response = await fetch(file);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Could not load " +
+                file +
+                " | HTTP Status: " +
+                response.status
+            );
+
+        }
+
+
+        const text = await response.text();
+
+
+        console.log(
+            "CSV loaded successfully:",
+            file
+        );
+
+
+        /*
+         * CSV parser
+         *
+         * This handles:
+         * - commas
+         * - quoted values
+         * - empty values
+         */
+
+        const rows = [];
+
+        let row = [];
+
+        let value = "";
+
+        let insideQuotes = false;
+
+
+        for (let i = 0; i < text.length; i++) {
+
+            const character = text[i];
+
+            const nextCharacter =
+                text[i + 1];
+
+
+            /* Double quote */
+
+            if (character === '"') {
+
+                if (
+                    insideQuotes &&
+                    nextCharacter === '"'
+                ) {
+
+                    value += '"';
+
+                    i++;
+
+                } else {
+
+                    insideQuotes =
+                        !insideQuotes;
+
+                }
+
+            }
+
+
+            /* Comma */
+
+            else if (
+                character === "," &&
+                !insideQuotes
+            ) {
+
+                row.push(value);
+
+                value = "";
+
+            }
+
+
+            /* New line */
+
+            else if (
+                (
+                    character === "\n" ||
+                    character === "\r"
+                ) &&
+                !insideQuotes
+            ) {
+
+                if (
+                    character === "\r" &&
+                    nextCharacter === "\n"
+                ) {
+
+                    i++;
+
+                }
+
+
+                row.push(value);
+
+                rows.push(row);
+
+                row = [];
+
+                value = "";
+
+            }
+
+
+            /* Normal character */
+
+            else {
+
+                value += character;
+
+            }
+
+        }
+
+
+        /*
+         * Add last value/row
+         */
+
+        if (
+            value.length > 0 ||
+            row.length > 0
+        ) {
+
+            row.push(value);
+
+            rows.push(row);
+
+        }
+
+
+        if (rows.length === 0) {
+
+            return [];
+
+        }
+
+
+        /*
+         * First row = headers
+         */
+
+        const headers = rows[0].map(
+            header =>
+                header
+                    .trim()
+                    .replace(/^\uFEFF/, "")
+        );
+
+
+        /*
+         * Convert rows into objects
+         */
+
+        const data = [];
+
+
+        for (
+            let i = 1;
+            i < rows.length;
+            i++
+        ) {
+
+            const currentRow = rows[i];
+
+
+            /*
+             * Ignore completely empty rows
+             */
+
+            if (
+                currentRow.length === 1 &&
+                currentRow[0].trim() === ""
+            ) {
+
+                continue;
+
+            }
+
+
+            const object = {};
+
+
+            headers.forEach(
+                (header, index) => {
+
+                    object[header] =
+                        currentRow[index] !== undefined
+                            ? currentRow[index].trim()
+                            : "";
+
+                }
+            );
+
+
+            data.push(object);
+
+        }
+
+
+        console.log(
+            "Parsed data:",
+            file,
+            data
+        );
+
+
+        return data;
+
+    }
+
+
+    /* =====================================================
+       LOAD DASHBOARD
+       ===================================================== */
+
+    async function loadDashboard() {
+
+        try {
+
+
+            console.log(
+                "Starting dashboard..."
+            );
+
+
+            /* =============================================
+               LOAD CSV FILES
+               ============================================= */
+
+            const categoryData =
+                await loadCSV(
+                    "output/category_analysis.csv"
+                );
+
+
+            const productData =
+                await loadCSV(
+                    "output/top_products.csv"
+                );
+
+
+            const monthlyData =
+                await loadCSV(
+                    "output/monthly_analysis.csv"
+                );
+
+
+            console.log(
+                "Category Data:",
+                categoryData
+            );
+
+
+            console.log(
+                "Product Data:",
+                productData
+            );
+
+
+            console.log(
+                "Monthly Data:",
+                monthlyData
+            );
+
+
+            /* =============================================
+               CATEGORY DATA
+               ============================================= */
+
+            const categoryLabels =
+                categoryData.map(
+                    row =>
+                        row.category ||
+                        "Unknown"
+                );
+
+
+            const categoryRevenue =
+                categoryData.map(
+                    row =>
+                        Number(
+                            row.revenue
+                        ) || 0
+                );
+
+
+            /* =============================================
+               TOTAL REVENUE
+               ============================================= */
+
+            const totalRevenue =
+                categoryRevenue.reduce(
+                    (total, value) =>
+                        total + value,
+                    0
+                );
+
+
+            document.getElementById(
+                "revenue"
+            ).textContent =
+                "₹" +
+                totalRevenue.toLocaleString(
+                    "en-IN",
+                    {
+                        maximumFractionDigits: 2
+                    }
+                );
+
+
+            /* =============================================
+               TOP CATEGORY
+               ============================================= */
+
+            let topCategory = "-";
+
+
+            if (
+                categoryData.length > 0
+            ) {
+
+                const highestCategory =
+                    categoryData.reduce(
+                        (max, row) => {
+
+                            const currentRevenue =
+                                Number(
+                                    row.revenue
+                                ) || 0;
+
+
+                            const maxRevenue =
+                                Number(
+                                    max.revenue
+                                ) || 0;
+
+
+                            return currentRevenue >
+                                maxRevenue
+                                ? row
+                                : max;
+
+                        }
+                    );
+
+
+                topCategory =
+                    highestCategory.category ||
+                    "-";
+
+            }
+
+
+            document.getElementById(
+                "category"
+            ).textContent =
+                topCategory;
+
+
+            /* =============================================
+               NUMBER OF CATEGORIES
+               ============================================= */
+
+            document.getElementById(
+                "categories"
+            ).textContent =
+                categoryData.length;
+
+
+            /* =============================================
+               CATEGORY CHART
+               ============================================= */
+
+            const categoryCanvas =
+                document.getElementById(
+                    "categoryChart"
+                );
+
+
+            new Chart(
+                categoryCanvas,
+                {
+
+                    type: "bar",
+
+
+                    data: {
+
+                        labels:
+                            categoryLabels,
+
+
+                        datasets: [
+
+                            {
+
+                                label:
+                                    "Revenue",
+
+
+                                data:
+                                    categoryRevenue
+
+                            }
+
+                        ]
+
+                    },
+
+
+                    options: {
+
+                        responsive: true,
+
+
+                        maintainAspectRatio:
+                            false,
+
+
+                        plugins: {
+
+                            legend: {
+
+                                display:
+                                    false
+
+                            }
+
+                        },
+
+
+                        scales: {
+
+                            y: {
+
+                                beginAtZero:
+                                    true,
+
+
+                                ticks: {
+
+                                    callback:
+                                        function(value) {
+
+                                            return (
+                                                "₹" +
+                                                Number(
+                                                    value
+                                                ).toLocaleString(
+                                                    "en-IN"
+                                                )
+                                            );
+
+                                        }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            /* =============================================
+               TOP PRODUCTS
+               ============================================= */
+
+            const productLabels =
+                productData.map(
+                    row =>
+                        row.product_name ||
+                        "Unknown Product"
+                );
+
+
+            const productQuantities =
+                productData.map(
+                    row =>
+                        Number(
+                            row.quantity
+                        ) || 0
+                );
+
+
+            /* =============================================
+               TOP PRODUCT CARD
+               ============================================= */
+
+            let topProduct = "-";
+
+
+            if (
+                productData.length > 0
+            ) {
+
+                const highestProduct =
+                    productData.reduce(
+                        (max, row) => {
+
+                            const currentQuantity =
+                                Number(
+                                    row.quantity
+                                ) || 0;
+
+
+                            const maxQuantity =
+                                Number(
+                                    max.quantity
+                                ) || 0;
+
+
+                            return currentQuantity >
+                                maxQuantity
+                                ? row
+                                : max;
+
+                        }
+                    );
+
+
+                topProduct =
+                    highestProduct.product_name ||
+                    "Unknown Product";
+
+            }
+
+
+            document.getElementById(
+                "product"
+            ).textContent =
+                topProduct;
+
+
+            /* =============================================
+               PRODUCT CHART
+               ============================================= */
+
+            const productCanvas =
+                document.getElementById(
+                    "productChart"
+                );
+
+
+            new Chart(
+                productCanvas,
+                {
+
+                    type: "bar",
+
+
+                    data: {
+
+                        labels:
+                            productLabels,
+
+
+                        datasets: [
+
+                            {
+
+                                label:
+                                    "Quantity Sold",
+
+
+                                data:
+                                    productQuantities
+
+                            }
+
+                        ]
+
+                    },
+
+
+                    options: {
+
+                        responsive: true,
+
+
+                        maintainAspectRatio:
+                            false,
+
+
+                        indexAxis:
+                            "y",
+
+
+                        plugins: {
+
+                            legend: {
+
+                                display:
+                                    false
+
+                            }
+
+                        },
+
+
+                        scales: {
+
+                            x: {
+
+                                beginAtZero:
+                                    true
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            /* =============================================
+               MONTHLY DATA
+               ============================================= */
+
+            const months =
+                monthlyData.map(
+                    row =>
+                        row.date ||
+                        "Unknown"
+                );
+
+
+            const monthlyRevenue =
+                monthlyData.map(
+                    row =>
+                        Number(
+                            row.revenue
+                        ) || 0
+                );
+
+
+            /* =============================================
+               MONTHLY CHART
+               ============================================= */
+
+            const monthlyCanvas =
+                document.getElementById(
+                    "monthlyChart"
+                );
+
+
+            new Chart(
+                monthlyCanvas,
+                {
+
+                    type: "line",
+
+
+                    data: {
+
+                        labels:
+                            months,
+
+
+                        datasets: [
+
+                            {
+
+                                label:
+                                    "Monthly Revenue",
+
+
+                                data:
+                                    monthlyRevenue,
+
+
+                                fill:
+                                    false,
+
+
+                                tension:
+                                    0.3
+
+                            }
+
+                        ]
+
+                    },
+
+
+                    options: {
+
+                        responsive: true,
+
+
+                        maintainAspectRatio:
+                            false,
+
+
+                        plugins: {
+
+                            legend: {
+
+                                display:
+                                    true
+
+                            }
+
+                        },
+
+
+                        scales: {
+
+                            y: {
+
+                                beginAtZero:
+                                    true,
+
+
+                                ticks: {
+
+                                    callback:
+                                        function(value) {
+
+                                            return (
+                                                "₹" +
+                                                Number(
+                                                    value
+                                                ).toLocaleString(
+                                                    "en-IN"
+                                                )
+                                            );
+
+                                        }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            /*
+             * Dashboard loaded successfully
+             */
+
+            console.log(
+                "Dashboard loaded successfully!"
+            );
+
+
+        }
+
+        catch (error) {
+
+
+            console.error(
+                "Dashboard loading error:",
+                error
+            );
+
+
+            document.getElementById(
+                "error"
+            ).style.display =
+                "block";
+
+
+            document.getElementById(
+                "error"
+            ).textContent =
+                "⚠️ Dashboard error: " +
+                error.message;
+
+
+        }
+
+    }
+
+
+    /* =====================================================
+       START DASHBOARD
+       ===================================================== */
+
+    loadDashboard();
+
+
+</script>
+
+
+</body>
+
+</html>
